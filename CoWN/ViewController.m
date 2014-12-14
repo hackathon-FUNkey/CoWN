@@ -31,13 +31,13 @@
     urlStr = @"http://www.yahoo.co.jp/";
     NSURL* url = [NSURL URLWithString:urlStr];
     NSURLRequest *request = [NSURLRequest requestWithURL:url];
-
+    
     [[mywebview mainFrame]loadRequest:request];
     // URL を設定します
     [urlfield setStringValue:urlStr];
     [mywebview setFrameLoadDelegate:self];
-   
-     mouseImage = [[NSImageView alloc] init];
+    
+    mouseImage = [[NSImageView alloc] init];
     //分かりやすく背景追加
     x=200;
     y=200;
@@ -48,16 +48,18 @@
     //self.datas = [NSMutableArray array];
     self.socketIO = [[SocketIO alloc] initWithDelegate:self];
     
-//    
-//    
-    [self performSelector:@selector(myFunc) withObject:nil afterDelay:0.01];
-
+    //
+    //
+     [self performSelector:@selector(myFunc) withObject:nil afterDelay:0.01];
+    
+    self.message.delegate = self;
+    
 }
 
 - (void)applicationDidBecomeActive
 {
     // localhost:3000に接続開始
-    [self.socketIO connectToHost:@"192.168.1.8" onPort:3001];
+    [self.socketIO connectToHost:@"192.168.43.9" onPort:3001];
 }
 
 - (void)applicationWillResignActive
@@ -69,21 +71,21 @@
 - (void)socketIODidConnect:(SocketIO *)socket
 {
     NSLog(@"seiko");
-
+    
 }
 
 - (void)socketIODidDisconnect:(SocketIO *)socket disconnectedWithError:(NSError *)error
 {
     NSLog(@"sippai");
-
+    
 }
 
 - (void)myFunc{
     CGEventRef event = CGEventCreate(NULL);
     CGPoint location = CGEventGetLocation(event);
     NSPoint point;
-      point = [NSEvent mouseLocation];
-        int currentPosition = [[[self mywebview]stringByEvaluatingJavaScriptFromString:@"window.scrollY;"] intValue];
+    point = [NSEvent mouseLocation];
+    int currentPosition = [[[self mywebview]stringByEvaluatingJavaScriptFromString:@"window.scrollY;"] intValue];
     int ScreenY = [[[self mywebview]stringByEvaluatingJavaScriptFromString:@" window.screenY;"] intValue];
     //NSLog(@"x座標:%f,y座標:%f",location.x,location.y+(float)currentPosition-(float)ScreenY-74.0);
     //[self.socketIO sendEvent:@"point" withData:@{@"x":(float)location.x,"y":location.y+(float)currentPosition-(float)ScreenY-74.0}];
@@ -91,24 +93,33 @@
     NSString *str_y = [NSString stringWithFormat:@"%f", point.y+(float)currentPosition-(float)ScreenY-74.0];
     [self.socketIO sendEvent:@"point" withData:@{@"x":str_x,@"y":str_y}];
     [self performSelector:@selector(myFunc) withObject:nil afterDelay:0.01];
-//    x=x+5;
-//    y=y+5;
-//    mouseImage.frame = CGRectMake((float)x, (float)y, 100, 100);
+    //    x=x+5;
+    //    y=y+5;
+    //    mouseImage.frame = CGRectMake((float)x, (float)y, 100, 100);
 }
 
-- (BOOL)control:(NSControl *)control textView:(NSTextView *)textView doCommandBySelector:(SEL)command {
-    if (command == @selector(insertNewlineIgnoringFieldEditor:)) {
-        // Returnを入力すると、この分岐に入る
-        return YES;
-    } else {
+
+
+- (BOOL)control:(NSControl*)control
+       textView:(NSTextView*)textView
+doCommandBySelector:(SEL)commandSelector
+{
+    NSLog(@"ss");
+    BOOL result = NO;
+    
+    if (commandSelector == @selector(insertNewline:))
+    {
         [self.socketIO sendEvent:@"message" withData:@{@"message":[message stringValue]}];
-        return NO;
+        
+        result = YES;
     }
+    
+    return result;
 }
 
 - (void)setRepresentedObject:(id)representedObject {
     [super setRepresentedObject:representedObject];
-
+    
     // Update the view, if already loaded.
 }
 
@@ -133,9 +144,9 @@ didFinishLoadForFrame:(WebFrame *)frame{
 
 - (IBAction)sendButton:(id)sender {
     [self.socketIO sendEvent:@"message" withData:@{@"message":[message stringValue]}];
-
- 
- //   [self.socketIO sendEvent:@"message" withData:@{@"message" : self.formCell.textField.text}];
+    
+    
+    //   [self.socketIO sendEvent:@"message" withData:@{@"message" : self.formCell.textField.text}];
     
 }
 
